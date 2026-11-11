@@ -145,6 +145,19 @@ python -m PyInstaller --onefile --paths . --name Youtube_conversor main.py
 
 ---
 
+## Transparência sobre o uso de IA
+
+O OpenAI Codex auxiliou na revisão deste projeto, correção de bugs, criação de
+testes automatizados, configuração do CI e documentação. Essa assistência não
+significa que o projeto original tenha sido inteiramente gerado por IA.
+
+A IA é usada como assistente de desenvolvimento. O aplicativo não chama APIs de
+IA generativa nem envia URLs ou mídias do usuário a um serviço de IA durante a
+execução normal. Downloads do YouTube continuam exigindo requisições de rede,
+conforme descrito em [PRIVACY.md](PRIVACY.md).
+
+---
+
 ## Autor
 
 [DaviFeitosaBastos](https://github.com/DaviFeitosaBastos)
