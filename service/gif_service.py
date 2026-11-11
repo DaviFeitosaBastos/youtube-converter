@@ -1,21 +1,11 @@
 from pathlib import Path
-from tempfile import TemporaryDirectory
 
-import ffmpeg
-
+from service import media_engine
+from service.video_service import _done, _progress
 from ui.display import cli
 from ui.validation import validate_path
-from utils.media import media_action, output_folder, publish_file, require_ffmpeg, safe_filename
-
-
-def _time_seconds(value: str) -> int:
-    parts = value.split(":")
-    if len(parts) != 3 or any(not p.isascii() or not p.isdigit() for p in parts):
-        raise ValueError("Use HH:MM:SS")
-    hours, minutes, seconds = map(int, parts)
-    if minutes > 59 or seconds > 59:
-        raise ValueError("Minutes and seconds must be between 00 and 59")
-    return hours * 3600 + minutes * 60 + seconds
+from utils.inputs import time_seconds as _time_seconds
+from utils.media import media_action
 
 
 def _get_time_input(label: str) -> str:
@@ -40,36 +30,17 @@ def _get_int_with_default(label: str, default: int, maximum: int = 4096) -> int:
 
 @media_action
 def convert_mp4_to_gif(path: str) -> None:
-    executable = require_ffmpeg()
     if not validate_path(path):
         return
-    source = Path(path).resolve()
-    if source.suffix.lower() != ".mp4":
+    if Path(path).suffix.lower() != ".mp4":
         cli.print("[red]Escolha um arquivo .mp4.[/red]")
         return
-    start = _time_seconds(_get_time_input("Início do trecho"))
+    start_time = _get_time_input("Início do trecho")
     while True:
-        end = _time_seconds(_get_time_input("Fim do trecho"))
-        if end > start:
+        end_time = _get_time_input("Fim do trecho")
+        if _time_seconds(end_time) > _time_seconds(start_time):
             break
         cli.print("[red]O fim do trecho deve ser posterior ao início.[/red]")
     fps = _get_int_with_default("FPS", 10, 60)
     width = _get_int_with_default("Largura (px)", 480)
-    folder = output_folder("gifs")
-    destination = folder / (safe_filename(source.stem) + ".gif")
-    if destination.exists():
-        raise FileExistsError()
-    with TemporaryDirectory(prefix=".convert-", dir=folder) as temporary:
-        palette = Path(temporary) / "palette.png"
-        result = Path(temporary) / "result.gif"
-        def video():
-            return (ffmpeg.input(str(source), ss=start, t=end - start)
-                    .filter("fps", fps).filter("scale", width, -1, flags="lanczos"))
-        (video().filter("palettegen").output(str(palette)).overwrite_output()
-         .global_args("-nostdin").run(cmd=executable, quiet=True))
-        (ffmpeg.filter([video(), ffmpeg.input(str(palette))], "paletteuse")
-         .output(str(result)).overwrite_output().global_args("-nostdin")
-         .run(cmd=executable, quiet=True))
-        publish_file(result, destination)
-    cli.print(f"Salvo em: {destination}", markup=False)
-    input("Pressione Enter para voltar ao menu... ")
+    _done(media_engine.convert_gif(path, start_time, end_time, fps, width, callback=_progress))

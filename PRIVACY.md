@@ -1,8 +1,13 @@
 # Privacidade e proteção de dados
 
 O aplicativo é executado localmente, sem cadastro, servidor próprio, telemetria,
-analytics ou histórico persistente de URLs. A interface web em `web/` é apenas
-um protótipo sem backend; usa recursos locais e não realiza downloads.
+analytics ou histórico persistente de URLs. A interface em `web/` é carregada em
+uma janela pywebview com recursos locais e perfil privado. Ela se comunica com
+Python por uma ponte no próprio processo, sem API HTTP ou servidor de aplicação.
+URLs, arquivos selecionados, pasta de saída e atividade ficam em memória durante
+a sessão. A pasta escolhida na janela não é persistida entre sessões. O renderizador
+pode usar arquivos temporários e caches técnicos; perfil privado não é uma garantia
+de apagamento seguro do armazenamento do sistema.
 
 ## Dados e finalidade
 

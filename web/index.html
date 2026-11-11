@@ -1,145 +1,80 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>YT Conversor</title>
-    <link rel="stylesheet" href="style.css" />
-  </head>
-  <body>
-    <div class="wrapper">
-
-      <div class="top-bar">
-        <p class="logo">yt<span>_</span>conversor <span>// v1.0.3</span></p>
-        <button id="langBtn" class="pill" onclick="toggleLang()">EN</button>
-      </div>
-
-      <h1 class="title">Youtube<br />Conversor</h1>
-      <p class="subtitle"
-        data-pt="Baixe vídeos e músicas diretamente do YouTube."
-        data-en="Download videos and music directly from YouTube.">
-        Baixe vídeos e músicas diretamente do YouTube.
-      </p>
-
-      <!-- ── Download section ── -->
-      <div class="card">
-        <p class="card-label"
-          data-pt="URL do vídeo"
-          data-en="Video URL">
-          URL do vídeo
-        </p>
-        <input
-          class="url-input"
-          type="text"
-          id="urlInput"
-          data-pt="https://youtube.com/watch?v=..."
-          data-en="https://youtube.com/watch?v=..."
-          placeholder="https://youtube.com/watch?v=..."
-        />
-      </div>
-
-      <div class="card">
-        <p class="card-label"
-          data-pt="Formato"
-          data-en="Format">
-          Formato
-        </p>
-        <div class="pills">
-          <button class="pill active" onclick="selectPill(this)">MP3</button>
-          <button class="pill" onclick="selectPill(this)">MP4</button>
-          <button class="pill" onclick="selectPill(this)">WAV</button>
-        </div>
-      </div>
-
-      <button class="btn-download" onclick="handleDownload()"
-        data-pt="→ Iniciar download"
-        data-en="→ Start download">
-        → Iniciar download
-      </button>
-
-      <div class="status">
-        <div class="status-dot"></div>
-        <span id="statusText"
-          data-pt="Pronto para converter."
-          data-en="Ready to convert.">
-          Pronto para converter.
-        </span>
-      </div>
-
-      <!-- ── GIF section ── -->
-      <div class="section-divider">
-        <span data-pt="MP4 → GIF" data-en="MP4 → GIF">MP4 → GIF</span>
-      </div>
-
-      <div class="card">
-        <p class="card-label"
-          data-pt="Arquivo MP4"
-          data-en="MP4 file">
-          Arquivo MP4
-        </p>
-        <label class="file-input-label" for="gifFile">
-          <span id="fileLabel"
-            data-pt="Selecionar arquivo .mp4"
-            data-en="Select .mp4 file">
-            Selecionar arquivo .mp4
-          </span>
-          <input type="file" id="gifFile" accept=".mp4"
-            onchange="document.getElementById('fileLabel').textContent = this.files[0]?.name || (lang === 'pt' ? 'Selecionar arquivo .mp4' : 'Select .mp4 file')" />
-        </label>
-
-        <div class="gif-row">
-          <div class="gif-col">
-            <p class="card-label"
-              data-pt="Início"
-              data-en="Start">
-              Início
-            </p>
-            <input class="url-input" type="text" id="gifStart" placeholder="00:00:00" />
-          </div>
-          <div class="gif-col">
-            <p class="card-label"
-              data-pt="Fim"
-              data-en="End">
-              Fim
-            </p>
-            <input class="url-input" type="text" id="gifEnd" placeholder="00:00:10" />
-          </div>
-        </div>
-
-        <div class="gif-row">
-          <div class="gif-col">
-            <p class="card-label"
-              data-pt="FPS (padrão: 10)"
-              data-en="FPS (default: 10)">
-              FPS (padrão: 10)
-            </p>
-            <input class="url-input" type="number" id="gifFps" placeholder="10" />
-          </div>
-          <div class="gif-col">
-            <p class="card-label"
-              data-pt="Largura px (padrão: 480)"
-              data-en="Width px (default: 480)">
-              Largura px (padrão: 480)
-            </p>
-            <input class="url-input" type="number" id="gifWidth" placeholder="480" />
-          </div>
-        </div>
-      </div>
-
-      <button class="btn-download btn-gif"
-        data-pt="→ Converter para GIF"
-        data-en="→ Convert to GIF">
-        → Converter para GIF
-      </button>
-
-      <!-- ── Author ── -->
-      <div class="author-box">
-        <div class="name">
-          Author:<span> Davi Feitosa Bastos</span>
-        </div>
-      </div>
-
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval' qrc:; img-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'" />
+  <title>YouTube Converter</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <svg class="svg-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="m9 5 11 7-11 7V5Z"/></symbol>
+    <symbol id="i-video" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="4"/><path d="m10 9 5 3-5 3V9Z"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 3 2.4 6.6L21 12l-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4L12 3Z"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z"/><path d="m8 12 3 3 5-6"/></symbol>
+    <symbol id="i-music" viewBox="0 0 24 24"><path d="M10 17V5l10-2v12M10 9l10-2"/><ellipse cx="7" cy="17" rx="3" ry="3"/><ellipse cx="17" cy="15" rx="3" ry="3"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></symbol>
+  </svg>
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-icon"><svg><use href="#i-play"/></svg></span><span>youtube<span class="brand-bottom">converter<span class="brand-dot">.</span></span></span></div>
+    <p class="nav-label">SEU ESPAÇO DE CRIAÇÃO</p>
+    <nav aria-label="Ferramentas">
+      <button class="nav-item active" data-view="youtube" aria-current="page"><svg><use href="#i-video"/></svg>YouTube<span class="nav-index">01</span></button>
+      <button class="nav-item" data-view="gif"><svg><use href="#i-spark"/></svg>MP4 para GIF<span class="nav-index">02</span></button>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="privacy-note"><svg><use href="#i-shield"/></svg><div><strong>Seus arquivos são seus.</strong><p>Sem conta. Sem telemetria.</p></div></div>
+      <button class="text-button" id="privacyButton">Privacidade e sobre <span aria-hidden="true">↗</span></button>
+      <p class="author">Criado por Davi Feitosa Bastos</p>
     </div>
-    <script src="script.js"></script>
-  </body>
+  </aside>
+  <main>
+    <header class="topbar"><span class="eyebrow">MENOS ETAPAS. MAIS POSSIBILIDADES.</span><span class="engine-status" id="engineStatus"><span class="status-dot"></span>Conectando…</span></header>
+    <div class="workspace">
+      <div class="page-heading"><p class="eyebrow accent-text" id="pageEyebrow">DO YOUTUBE PARA VOCÊ</p><h1 id="pageTitle">Um link. Seu próximo play.</h1><p id="pageSubtitle">Vídeos e áudios, do jeito que você precisa. Salvos no seu computador.</p></div>
+      <div class="browser-notice" id="browserNotice" role="status">Abra pelo aplicativo desktop para baixar e converter arquivos.</div>
+      <div class="content-grid">
+        <section class="editor-card" aria-label="Configurar operação">
+          <form id="downloadForm">
+            <div class="section-heading"><span class="step-number">01</span><h2>Comece com um link</h2></div>
+            <label for="urlInput">Link do vídeo</label>
+            <input id="urlInput" type="url" placeholder="https://www.youtube.com/watch?v=…" autocomplete="off" spellcheck="false" required />
+            <div class="input-caption"><span>YouTube, Shorts e links youtu.be</span><button type="button" class="text-button" id="infoButton" data-native disabled>Ver informações</button></div>
+            <div class="section-heading second-step"><span class="step-number">02</span><h2>Escolha o formato</h2></div>
+            <fieldset class="format-options"><legend class="sr-only">Formato de saída</legend>
+              <label class="format-card"><input type="radio" name="format" value="mp4" checked /><span class="format-icon"><svg><use href="#i-video"/></svg></span><span><strong>Vídeo <span>MP4</span></strong><small>Imagem e som, juntos.</small></span><span class="radio-mark"></span></label>
+              <label class="format-card"><input type="radio" name="format" value="mp3" /><span class="format-icon"><svg><use href="#i-music"/></svg></span><span><strong>Áudio <span>MP3</span></strong><small>Só o que você quer ouvir.</small></span><span class="radio-mark"></span></label>
+            </fieldset>
+            <div class="quality-row" id="qualityRow"><label for="qualityInput">Qualidade do vídeo</label><select id="qualityInput"><option value="high">Melhor qualidade disponível</option><option value="low">Menor resolução · arquivo leve</option></select></div>
+            <button class="primary-button" type="submit" id="downloadButton" data-native disabled><svg><use href="#i-download"/></svg><span>Baixar vídeo</span><svg class="button-arrow"><use href="#i-arrow"/></svg></button>
+            <p class="form-footnote">Baixe apenas conteúdos para os quais você tenha autorização.</p>
+          </form>
+          <form id="gifForm" hidden>
+            <div class="section-heading"><span class="step-number">01</span><h2>Escolha seu vídeo</h2></div>
+            <button class="file-picker" id="chooseFile" type="button" data-native disabled><span class="file-icon"><svg><use href="#i-video"/></svg></span><strong id="fileName">Selecionar um arquivo MP4</strong><span class="file-helper">Clique para procurar no computador</span><span class="file-tag">.MP4</span></button>
+            <div class="section-heading second-step"><span class="step-number">02</span><h2>Dê o seu recorte</h2></div>
+            <div class="field-grid"><div><label for="gifStart">Início do trecho</label><input id="gifStart" value="00:00:00" placeholder="00:00:00" required pattern="[0-9]+:[0-5][0-9]:[0-5][0-9]" /></div><div><label for="gifEnd">Fim do trecho</label><input id="gifEnd" value="00:00:10" placeholder="00:00:10" required pattern="[0-9]+:[0-5][0-9]:[0-5][0-9]" /></div><div><label for="gifFps">Fluidez <span>FPS</span></label><input id="gifFps" type="number" value="10" min="1" max="60" required /></div><div><label for="gifWidth">Largura <span>pixels</span></label><input id="gifWidth" type="number" value="480" min="1" max="4096" required /></div></div>
+            <p class="field-hint">Menos FPS e uma largura menor deixam seu GIF mais leve.</p>
+            <button class="primary-button" type="submit" id="gifButton" data-native disabled><svg><use href="#i-spark"/></svg><span>Criar meu GIF</span><svg class="button-arrow"><use href="#i-arrow"/></svg></button>
+            <p class="form-footnote">A conversão acontece no seu computador, sem enviar o MP4.</p>
+          </form>
+        </section>
+        <aside class="right-column">
+          <section class="inspiration-card" aria-label="Sua mídia, do seu jeito">
+            <div class="media-art" aria-hidden="true"><div class="art-orbit"></div><div class="art-card art-back"><span>SEU PRÓXIMO</span><div class="waveform"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div><div class="art-card art-front"><span>PLAY</span><svg><use href="#i-play"/></svg><div class="art-timeline"><b></b></div></div><span class="art-sticker">feito para você ↗</span></div>
+            <h2>Do seu jeito.<br>No seu ritmo.</h2><p>Uma ideia, uma música ou aquele trecho que merece um replay.</p><div class="format-tags"><span>MP4</span><span>MP3</span><span>GIF</span></div>
+          </section>
+          <section class="activity-card" id="activityCard" aria-labelledby="activityTitle" aria-busy="false"><div class="activity-header"><h2 id="activityTitle">Sua atividade</h2><span class="activity-indicator" id="activityIndicator"></span></div><p id="statusText" role="status" aria-live="polite">Tudo pronto para começar.</p><div class="progress-row" id="progressRow" hidden><progress id="progressBar" max="100" aria-label="Progresso da etapa atual"></progress><span id="progressLabel">…</span></div><p class="result-path" id="resultPath" hidden></p><button type="button" class="cancel-button" id="cancelButton" hidden>Cancelar operação</button></section>
+        </aside>
+      </div>
+      <section class="metadata-card" id="metadataCard" hidden aria-label="Informações do vídeo"><p class="eyebrow">SOBRE ESTE VÍDEO</p><h2 id="videoTitle"></h2><p id="videoDetails"></p><p id="videoDescription"></p></section>
+    </div>
+    <footer class="output-bar"><svg><use href="#i-folder"/></svg><div class="output-location"><span>SALVAR EM</span><p id="outputPath">Aguardando o aplicativo…</p></div><button class="text-button" id="chooseOutput" data-native disabled>Alterar</button><button class="folder-button" id="openOutput" data-native disabled>Abrir pasta <span aria-hidden="true">↗</span></button></footer>
+  </main>
+  <dialog id="privacyDialog"><div class="dialog-heading"><h2>Feito para ficar com você.</h2><button id="closePrivacy" aria-label="Fechar">×</button></div><p>Sem cadastro, telemetria ou histórico persistente. Os arquivos ficam na pasta de saída até você excluí-los.</p><p>Downloads e consultas enviam requisições ao YouTube/Google, que recebe seu IP e dados técnicos da conexão. A conversão de MP4 para GIF acontece localmente.</p><p>A pasta escolhida e a atividade são mantidas apenas nesta sessão. Temporários são removidos ao concluir, falhar ou cancelar normalmente. Um encerramento forçado pode deixar temporários no disco.</p><p>Você pode excluir seus arquivos pelo gerenciador do sistema. Detalhes e limites estão em PRIVACY.md, incluído com o aplicativo.</p><div class="dialog-about"><strong>YouTube Converter</strong><p>Criado por Davi Feitosa Bastos. Desenvolvimento e revisão com assistência do OpenAI Codex. O aplicativo não utiliza IA generativa durante a execução.</p></div></dialog>
+  <script src="script.js"></script>
+</body>
 </html>

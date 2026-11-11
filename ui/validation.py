@@ -1,8 +1,6 @@
 from rich.prompt import Prompt
 from rich.panel import Panel
 from ui.display import sleep, clear, cli
-from pytubefix.exceptions import RegexMatchError
-from urllib.parse import urlparse
 from pathlib import Path
 from utils.log_utils import get_logger
 
@@ -12,19 +10,11 @@ def url_validate(url: str) -> bool:
     """
     Validate a YouTube video URL locally; the service checks availability.
     """
-    try:
-        parsed = urlparse(url)
-        host = (parsed.hostname or "").lower()
-        valid_host = host in {"youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com", "youtu.be", "www.youtu.be"}
-        if parsed.scheme not in {"http", "https"} or not valid_host or parsed.username or parsed.password or parsed.port not in (None, 80, 443):
-            raise ValueError("Invalid YouTube URL")
-        # Let the downloader report availability; validation should not make duplicate requests.
-        from pytubefix.extract import video_id
-        video_id(url)
+    from utils.inputs import valid_youtube_url
+    if valid_youtube_url(url):
         return True
-    except (ValueError, RegexMatchError):
-        cli.print("[red]Informe um link válido de vídeo do YouTube.[/red]")
-        return False
+    cli.print("[red]Informe um link válido de vídeo do YouTube.[/red]")
+    return False
 
 
 def yes_or_not(message: str) -> bool:

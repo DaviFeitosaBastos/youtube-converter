@@ -1,193 +1,151 @@
-# Youtube Conversor
+# YouTube Converter
 
-Uma ferramenta CLI em Python para baixar vídeos e áudios do YouTube, além de converter arquivos MP4 para GIF diretamente pelo terminal, com uma interface de menu limpa e interativa usando Rich.
+Aplicativo desktop para Linux e Windows, com interface em português feita em
+HTML/CSS/JavaScript e uma janela nativa usando **pywebview**. Baixe vídeos MP4,
+extraia MP3 e transforme arquivos MP4 em GIF sem usar um terminal no dia a dia.
 
----
+## O que funciona
 
-## Funcionalidades
+- Vídeos do YouTube em alta qualidade ou menor resolução.
+- Extração de áudio em MP3 e consulta de informações do vídeo.
+- Conversão local de MP4 para GIF com corte, FPS e largura configuráveis.
+- Seletores nativos de arquivos e da pasta de saída.
+- Progresso da etapa atual, cancelamento e mensagens de erro na janela.
+- Uma operação por vez, sem sobrescrever arquivos existentes.
+- Interface de terminal preservada como alternativa em `main.py`.
 
-- Baixar vídeos do YouTube em **alta ou baixa resolução**
-- Baixar **faixas de áudio** do YouTube como MP3
-- Converter **vídeos MP4 para GIF** com configurações personalizáveis (FPS, resolução, corte)
-- Visualizar **metadados do vídeo** antes de baixar
-- Menu interativo com validação de URL
-- Interface de terminal limpa usando Rich
+A pasta `web/` contém a interface real do aplicativo. Abrir `index.html` no
+navegador permite visualizar o layout, mas as operações exigem a janela desktop.
+Não há API HTTP nem servidor de aplicação; a comunicação usa a ponte do pywebview.
 
----
+## Abrir sem terminal
 
-## Estrutura do Projeto
+Nos artefatos do GitHub Actions ou em uma release, baixe o ZIP do seu sistema e
+**extraia a pasta inteira**. Mantenha a pasta `_internal` junto do executável.
 
-```
-Youtube_conversor/
-├── main.py               # Ponto de entrada da aplicação
-├── router.py             # Roteamento e lógica de navegação do menu
-├── .gitignore            # Ignora arquivos desnecessários
-├── README.md             # Versão em inglês
-├── README.pt-BR.md       # Você está lendo agora
-├── requirements.txt      # Todas as dependências
-├── __init__.py
-├── gifs/
-│   └── # GIFs convertidos ficam aqui
-├── web/
-│   ├── __init__.py
-│   └── log_utils.py     # Utilitários compartilhados (get_base_dir)(logger)
-├── service/
-│   ├── video_service.py  # Lógica de download de vídeo (alta res, baixa res, info)
-│   ├── track_service.py  # Lógica de download de áudio
-│   └── gif_service.py    # Lógica de conversão MP4 para GIF
-└── ui/
-    ├── __init__.py
-    ├── display.py        # Helpers de exibição CLI (cabeçalhos, menus, carregamento)
-    └── validation.py     # Validação de entrada (URL, inteiros, sim/não, seletor de arquivo)
-```
+- **Windows:** abra `YouTube-Converter-Windows.exe` com dois cliques. O aplicativo
+  usa Microsoft Edge WebView2 Runtime, que precisa estar instalado.
+- **Linux:** abra `YouTube-Converter-Linux` pelo gerenciador de arquivos. Se
+  necessário, permita executar o arquivo nas propriedades. O pacote inclui Qt,
+  mas depende das bibliotecas gráficas usuais do sistema. O build do CI usa Ubuntu
+  24.04; outras distribuições podem exigir um build local.
 
----
+O **FFmpeg precisa estar instalado e disponível no PATH**. Ele não é incluído no
+ZIP. A janela informa quando ele está ausente. Python não é necessário nos pacotes.
 
-## Configuração do Ambiente
+## Executar a partir do código
 
-**Crie e ative um ambiente virtual:**
+A instalação inicial requer Python 3.11 ou superior e comandos no terminal.
+Depois, use o atalho para abrir a janela.
 
 ```bash
 python -m venv venv
-
-# Linux
-source venv/bin/activate
-
-# Windows
-venv\Scripts\Activate
 ```
 
-**Instale as dependências:**
+Linux:
 
 ```bash
-pip install -r requirements.txt
+./venv/bin/python -m pip install -r requirements-desktop.txt
+./venv/bin/python scripts/create_shortcut.py
 ```
 
-> Certifique-se de que o `ffmpeg` está instalado no seu sistema e disponível no PATH.
->
-> Linux: `sudo apt install ffmpeg`
->
-> Windows: https://ffmpeg.org/download.html
+Abra o arquivo gerado **YouTube Converter.desktop**. Dependendo do ambiente,
+marque-o como executável/confiável no gerenciador de arquivos. Ele aponta para
+esta cópia do projeto; gere-o novamente se mover a pasta.
 
----
+Windows (PowerShell):
 
-## Uso
+```powershell
+.\venv\Scripts\python.exe -m pip install -r requirements-desktop.txt
+```
+
+Depois, abra **Start-Windows.vbs** com dois cliques. Ele usa o Python do ambiente
+virtual sem abrir console e requer o Windows Script Host habilitado.
+Também é possível criar um atalho para `venv\Scripts\pythonw.exe desktop.py`,
+com a pasta do projeto como diretório de trabalho.
+
+Para iniciar a janela diretamente durante o desenvolvimento:
 
 ```bash
-# linux
-python3 main.py
+python desktop.py
+```
 
-# windows
+Use o Python do ambiente virtual. No Linux, as dependências desktop usam
+PySide6/QtWebEngine. No Windows, usam o renderizador Edge Chromium.
+Consulte a [instalação oficial do pywebview](https://pywebview.flowrl.com/guide/installation)
+para os requisitos gráficos do sistema e o [FFmpeg](https://ffmpeg.org/download.html)
+para instalar o conversor.
+
+## Como usar
+
+1. Em **YouTube**, cole o link, escolha MP4 ou MP3 e clique em baixar.
+2. Em **MP4 para GIF**, escolha um arquivo pelo seletor, informe início/fim em
+   `HH:MM:SS`, ajuste FPS/largura e clique em criar.
+3. Use **Alterar** no rodapé para escolher a pasta e **Abrir pasta** para ver os
+   arquivos. A escolha da pasta vale apenas para a sessão atual.
+
+O progresso é por etapa; a barra pode reiniciar ao começar outra faixa. Durante
+junção/conversão, é exibido progresso indeterminado. Cancelar pode aguardar a
+requisição de rede ou etapa atual. Fechar a janela durante uma operação solicita
+cancelamento; aguarde a conclusão e feche novamente.
+
+Pastas padrão: `~/.local/share/youtube-converter` no Linux (respeita `XDG_DATA_HOME`)
+e `%LOCALAPPDATA%\youtube-converter` no Windows. `YOUTUBE_CONVERTER_DATA_DIR`
+permite configurar outra pasta. Resultados ficam em `videos/`, `audios/` e `gifs/`.
+Arquivos de versões anteriores não são movidos ou apagados.
+
+## Terminal opcional
+
+```bash
+python -m pip install -r requirements.txt
+python main.py --check
 python main.py
 ```
 
-Navegue usando as opções numeradas:
-
-```
-================================
-         Menu principal
-================================
-1 - Baixar vídeos do [YOUTUBE]
-2 - Baixar faixa de áudio do [YOUTUBE]
-3 - Converter MP4 para GIF
-0 - Sair
-```
-
-Após selecionar uma opção, siga as instruções no terminal.
-
----
-
-
-A interface de terminal usa painéis Rich, menus numerados, status do FFmpeg e indicação da pasta de saída. Use os números para navegar, Enter para continuar e Ctrl+C para sair.
-
-## Pastas de Saída
-
-As pastas são criadas quando necessárias no diretório de dados do usuário (veja abaixo):
-
-| Pasta | Conteúdo |
-|---|---|
-| `videos/` | Vídeos MP4 baixados |
-| `audios/` | Faixas MP3 baixadas |
-| `gifs/` | Arquivos GIF convertidos |
-
----
-
-## Gerando o Executável
+## Testes e empacotamento
 
 ```bash
+python -m tests
+python desktop.py --check
+python -m tests.desktop_smoke
 python -m pip install -r requirements-build.txt
-python -m PyInstaller --onefile --paths . --name Youtube_conversor main.py
+python scripts/build_desktop.py
 ```
 
-> O executável fica em `dist/`. O FFmpeg continua sendo um requisito externo, disponível no PATH.
+O teste gráfico requer um ambiente desktop e FFmpeg; usa vídeo sintético, sem
+acessar o YouTube ou arquivos pessoais. Em Linux sem tela, pode usar Qt offscreen
+com renderização por software. Não desative o sandbox do Chromium.
 
----
+O build produz `dist/YouTube-Converter-Linux.zip` ou
+`dist/YouTube-Converter-Windows.zip`, conforme o sistema de compilação. O CI testa
+Python 3.11/3.14 em Linux e Windows e gera pacotes em pushes para `main` ou por
+execução manual. Tags `v*` também publicam uma release após os testes e builds.
 
-## Dependências
+## Privacidade e uso de IA
 
-| Pacote | Finalidade |
-|---|---|
-| `pytubefix` | Download de vídeo/áudio do YouTube |
-| `ffmpeg-python` | Conversão de MP4 para GIF |
-| `rich` | Estilização da interface no terminal |
+Sem telemetria, conta, histórico persistente ou logs de URLs. A janela usa recursos
+locais e perfil privado. Downloads consultam servidores do YouTube/Google;
+conversões de MP4 para GIF são locais. Veja [PRIVACY.md](PRIVACY.md) para os dados
+usados, terceiros, retenção, exclusão e limites da adequação à LGPD.
 
----
+OpenAI Codex auxiliou na revisão, correções, testes, interface desktop, CI e
+documentação. Isso não significa que o projeto original foi inteiramente gerado
+por IA. O aplicativo não chama APIs de IA generativa nem envia URLs ou mídias a
+serviços de IA durante a execução normal.
 
-## Roadmap
+Baixe apenas conteúdo que você tenha autorização para utilizar. Respeite os
+termos dos serviços e os direitos das pessoas presentes nas mídias.
 
-- [ ] Versão web da aplicação
-- [ ] Interface gráfica no lugar do terminal
-- [ ] Suporte a múltiplos provedores além do YouTube
+## Estrutura
 
----
-
-## Notas
-
-- Esta ferramenta é destinada apenas para uso pessoal.
-- Respeite os Termos de Serviço do YouTube ao baixar conteúdo.
-
----
-
-## Transparência sobre o uso de IA
-
-O OpenAI Codex auxiliou na revisão deste projeto, correção de bugs, criação de
-testes automatizados, configuração do CI e documentação. Essa assistência não
-significa que o projeto original tenha sido inteiramente gerado por IA.
-
-A IA é usada como assistente de desenvolvimento. O aplicativo não chama APIs de
-IA generativa nem envia URLs ou mídias do usuário a um serviço de IA durante a
-execução normal. Downloads do YouTube continuam exigindo requisições de rede,
-conforme descrito em [PRIVACY.md](PRIVACY.md).
-
----
+- `desktop.py`: abertura da janela e carregamento dos recursos locais.
+- `web/`: interface desktop em HTML, CSS e JavaScript.
+- `ui/desktop_api.py`: ponte da janela, seletores e operações em segundo plano.
+- `service/media_engine.py`: operações compartilhadas entre desktop e CLI.
+- `main.py`, `router.py`, `ui/display.py`: alternativa de terminal.
+- `scripts/`: geração de atalho Linux e empacotamento.
+- `tests/`: regressões, ponte desktop e teste da janela com FFmpeg real.
 
 ## Autor
 
-[DaviFeitosaBastos](https://github.com/DaviFeitosaBastos)
-
-## Linux e Windows, testes e privacidade
-
-Requer Python 3.11 ou superior e FFmpeg no PATH. No Windows, use
-`venv\Scripts\Activate.ps1` no PowerShell ou `venv\Scripts\activate.bat` no CMD.
-
-As mídias ficam em `~/.local/share/youtube-converter` (Linux; respeita
-`XDG_DATA_HOME`) ou `%LOCALAPPDATA%\youtube-converter` (Windows).
-Para manter a pasta de saída antiga, configure `YOUTUBE_CONVERTER_DATA_DIR`
-com o caminho absoluto do projeto. Os arquivos antigos não são movidos ou apagados.
-O conversor aceita um caminho MP4 externo ou a seleção entre os downloads.
-
-```bash
-python main.py --check
-python -m unittest discover -s tests -v
-```
-
-O CI testa Linux e Windows, Python 3.11 e 3.14. Tags `v*` geram executáveis
-separados por sistema e publicam uma release; execução manual gera artefatos.
-Não há backend web nesta versão.
-
-Leia [PRIVACY.md](PRIVACY.md) para dados usados, terceiros, retenção e exclusão.
-Não há telemetria nem logs persistentes. Isso não constitui certificação jurídica
-de conformidade com a LGPD.
-
-No Linux, o executável baixado pode precisar de `chmod +x Youtube_conversor-Linux`.
-O build usa o ambiente Ubuntu do CI; distribuições antigas podem exigir compilação local.
+[Davi Feitosa Bastos](https://github.com/DaviFeitosaBastos)

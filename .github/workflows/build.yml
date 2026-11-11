@@ -1,4 +1,4 @@
-name: Test and build
+name: Test and build desktop
 
 on:
   push:
@@ -10,13 +10,18 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: desktop-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-24.04, windows-latest]
         python: ["3.11", "3.14"]
     steps:
       - uses: actions/checkout@v4
@@ -25,49 +30,76 @@ jobs:
           python-version: ${{ matrix.python }}
       - name: Install FFmpeg (Linux)
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+        run: |
+          if ! command -v ffmpeg; then
+            sudo apt-get update
+            sudo apt-get install -y ffmpeg
+          fi
       - name: Install FFmpeg (Windows)
         if: runner.os == 'Windows'
         run: choco install ffmpeg -y --no-progress
-      - name: Install dependencies
-        run: python -m pip install -r requirements.txt
-      - name: Test (including local FFmpeg integration)
+      - name: Install desktop dependencies
+        run: python -m pip install -r requirements-desktop.txt
+      - name: Regression and bridge tests
         run: python -m tests
-      - name: Runtime check
-        run: python main.py --check
+      - name: Desktop assets and CLI runtime checks
+        run: |
+          python desktop.py --check
+          python main.py --check
+      - name: Native desktop integration (Linux)
+        if: runner.os == 'Linux'
+        env:
+          QT_QPA_PLATFORM: offscreen
+          QT_OPENGL: software
+          QT_QUICK_BACKEND: software
+          QTWEBENGINE_CHROMIUM_FLAGS: --disable-gpu
+        run: python -m tests.desktop_smoke
+      - name: Native desktop integration (Windows)
+        if: runner.os == 'Windows'
+        run: python -m tests.desktop_smoke
 
   build:
     needs: test
-    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    if: github.event_name != 'pull_request'
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-24.04, windows-latest]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
       - run: python -m pip install -r requirements-build.txt
-      - name: Build executable
-        run: python -m PyInstaller --onefile --paths . --name Youtube_conversor-${{ runner.os }} main.py
+      - name: Build native desktop package
+        run: python scripts/build_desktop.py
+      - name: Verify packaged imports and bundled assets
+        shell: python
+        run: |
+          import pathlib, subprocess
+          binaries = list(pathlib.Path('dist').glob('YouTube-Converter-*'))
+          folder = next(p for p in binaries if p.is_dir())
+          executable = folder / (folder.name + ('.exe' if '${{ runner.os }}' == 'Windows' else ''))
+          subprocess.run([str(executable.resolve()), '--check'], check=True)
       - uses: actions/upload-artifact@v4
         with:
-          name: Youtube_conversor-${{ runner.os }}
-          path: dist/Youtube_conversor-*
+          name: YouTube-Converter-${{ runner.os }}
+          path: dist/YouTube-Converter-*.zip
+          if-no-files-found: error
 
   release:
     needs: build
     if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
       - uses: actions/download-artifact@v4
         with:
-          pattern: Youtube_conversor-*
+          pattern: YouTube-Converter-*
           path: release
           merge-multiple: true
       - uses: softprops/action-gh-release@v2
         with:
-          files: release/Youtube_conversor-*
+          files: release/YouTube-Converter-*.zip

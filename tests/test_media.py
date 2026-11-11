@@ -9,7 +9,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from service import gif_service, track_service, video_service
+from service import gif_service, track_service, video_service, media_engine
 from ui import validation
 from utils import log_utils, media
 from utils.progress import make_progress_callback
@@ -76,7 +76,7 @@ class MediaTests(unittest.TestCase):
         self.assertFalse((self.root / 'app.log').exists())
 
     def test_external_errors_do_not_leak_details(self):
-        with patch.object(video_service, 'YouTube', side_effect=RuntimeError('https://secret-url/?token=private')), patch.object(media.log, 'error') as error:
+        with patch.object(media_engine, 'YouTube', side_effect=RuntimeError('https://secret-url/?token=private')), patch.object(media.log, 'error') as error:
             video_service.download_low_res('https://youtu.be/abcdefghijk')
         self.assertNotIn('secret', str(error.call_args))
         self.assertNotIn('private', str(error.call_args))
@@ -92,8 +92,8 @@ class MediaTests(unittest.TestCase):
                 raise OSError('connection failed')
             return str(result)
         stream.download.side_effect = download
-        with patch.object(video_service, 'YouTube', return_value=yt), patch.object(video_service, 'require_ffmpeg', return_value='ffmpeg'):
-            video_service.download_high_res('mock')
+        with patch.object(media_engine, 'YouTube', return_value=yt), patch.object(media_engine, 'require_ffmpeg', return_value='ffmpeg'):
+            video_service.download_high_res('https://youtu.be/dQw4w9WgXcQ')
         self.assertEqual(list((self.root / 'videos').iterdir()), [])
 
     def test_merge_failure_leaves_no_final_or_temporary_output(self):
@@ -108,15 +108,15 @@ class MediaTests(unittest.TestCase):
             Path(args[-1]).write_bytes(b'partial')
             raise subprocess.CalledProcessError(1, args)
         stream.download.side_effect = download
-        with patch.object(video_service, 'YouTube', return_value=yt), patch.object(video_service, 'require_ffmpeg', return_value='ffmpeg'), patch.object(video_service.subprocess, 'run', side_effect=merge):
-            video_service.download_high_res('mock')
+        with patch.object(media_engine, 'YouTube', return_value=yt), patch.object(media_engine, 'require_ffmpeg', return_value='ffmpeg'), patch.object(media_engine, '_run', side_effect=lambda args, cancel: merge(args)):
+            video_service.download_high_res('https://youtu.be/dQw4w9WgXcQ')
         self.assertEqual(list((self.root / 'videos').iterdir()), [])
 
     def test_missing_ffmpeg_is_handled(self):
         with patch.object(media.shutil, 'which', return_value=None):
             gif_service.convert_mp4_to_gif('missing.mp4')
-            track_service.download_track_youtube('mock')
-            video_service.download_high_res('mock')
+            track_service.download_track_youtube('https://youtu.be/dQw4w9WgXcQ')
+            video_service.download_high_res('https://youtu.be/dQw4w9WgXcQ')
         self.assertEqual(list(self.root.iterdir()), [])
 
     def test_cancelled_download_cleans_temporaries(self):
@@ -127,9 +127,9 @@ class MediaTests(unittest.TestCase):
             (Path(output_path) / filename).write_bytes(b'partial')
             raise KeyboardInterrupt()
         stream.download.side_effect = download
-        with patch.object(video_service, 'YouTube', return_value=yt), patch.object(video_service, 'require_ffmpeg', return_value='ffmpeg'):
+        with patch.object(media_engine, 'YouTube', return_value=yt), patch.object(media_engine, 'require_ffmpeg', return_value='ffmpeg'):
             with self.assertRaises(KeyboardInterrupt):
-                video_service.download_high_res('mock')
+                video_service.download_high_res('https://youtu.be/dQw4w9WgXcQ')
         self.assertEqual(list((self.root / 'videos').iterdir()), [])
 
     def test_unreadable_file_picker_returns_to_menu(self):
@@ -187,17 +187,17 @@ class MediaTests(unittest.TestCase):
         yt.streams.filter.return_value.order_by.return_value.last.return_value = stream
         yt.streams.filter.return_value.order_by.return_value.first.return_value = stream
         yt.streams.get_audio_only.return_value = stream
-        with patch.object(video_service, 'YouTube', return_value=yt):
-            video_service.download_high_res('mock')
+        with patch.object(media_engine, 'YouTube', return_value=yt):
+            video_service.download_high_res('https://youtu.be/dQw4w9WgXcQ')
         videos = list((self.root / 'videos').glob('*.mp4'))
         self.assertEqual(len(videos), 1)
         self.assertGreater(videos[0].stat().st_size, 0)
         yt.title = 'Low resolution'
-        with patch.object(video_service, 'YouTube', return_value=yt):
-            video_service.download_low_res('mock')
+        with patch.object(media_engine, 'YouTube', return_value=yt):
+            video_service.download_low_res('https://youtu.be/dQw4w9WgXcQ')
         self.assertEqual(len(list((self.root / 'videos').glob('*.mp4'))), 2)
-        with patch.object(track_service, 'YouTube', return_value=yt):
-            track_service.download_track_youtube('mock')
+        with patch.object(media_engine, 'YouTube', return_value=yt):
+            track_service.download_track_youtube('https://youtu.be/dQw4w9WgXcQ')
         audios = list((self.root / 'audios').glob('*.mp3'))
         self.assertEqual(len(audios), 1)
         self.assertGreater(audios[0].stat().st_size, 0)
