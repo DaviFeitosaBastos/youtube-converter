@@ -32,7 +32,7 @@ jobs:
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
       - name: Test (including local FFmpeg integration)
-        run: python -m unittest discover -s tests -v
+        run: python -m tests
       - name: Runtime check
         run: python main.py --check
 

@@ -19,7 +19,7 @@ class MediaTests(unittest.TestCase):
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
         self.addCleanup(self.directory.cleanup)
-        self.root = Path(self.directory.name)
+        self.root = Path(self.directory.name).resolve()
         environment = patch.dict(os.environ, {'YOUTUBE_CONVERTER_DATA_DIR': str(self.root)})
         environment.start()
         self.addCleanup(environment.stop)
