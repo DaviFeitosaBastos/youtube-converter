@@ -37,5 +37,3 @@ def publish_file(source: Path, destination: Path) -> None:
             target.close()
             destination.unlink(missing_ok=True)
             raise
-
-
