@@ -27,5 +27,5 @@ def download_track_youtube(url: str) -> None:
         subprocess.run([executable, "-nostdin", "-y", "-i", str(source), "-q:a", "0", "-map", "0:a:0", str(result)],
                        check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         publish_file(result, destination)
-    cli.print(f"Saved to: {destination}", markup=False)
-    input("Press Enter to return to the menu...")
+    cli.print(f"Salvo em: {destination}", markup=False)
+    input("Pressione Enter para voltar ao menu... ")

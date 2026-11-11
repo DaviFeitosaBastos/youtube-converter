@@ -97,6 +97,9 @@ Após selecionar uma opção, siga as instruções no terminal.
 
 ---
 
+
+A interface de terminal usa painéis Rich, menus numerados, status do FFmpeg e indicação da pasta de saída. Use os números para navegar, Enter para continuar e Ctrl+C para sair.
+
 ## Pastas de Saída
 
 As pastas são criadas quando necessárias no diretório de dados do usuário (veja abaixo):

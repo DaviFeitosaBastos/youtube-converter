@@ -48,14 +48,14 @@ def run():
         try:
             require_ffmpeg()
         except FileNotFoundError:
-            cli.print("FFmpeg is missing from PATH.")
+            cli.print("FFmpeg não encontrado no PATH.")
             return 1
-        cli.print("Runtime OK: Python dependencies and FFmpeg available.")
+        cli.print("Tudo pronto: dependências do Python e FFmpeg disponíveis.")
         return 0
     try:
         main()
     except (KeyboardInterrupt, EOFError):
-        cli.print("\nExiting.")
+        cli.print("\nAté a próxima!")
     return 0
 
 

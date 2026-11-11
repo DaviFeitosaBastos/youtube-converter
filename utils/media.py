@@ -50,14 +50,14 @@ def media_action(function):
         try:
             return function(*args, **kwargs)
         except FileExistsError:
-            cli.print("[yellow]Output already exists. No file was overwritten.[/yellow]")
+            cli.print("[yellow]O arquivo já existe. Nenhum arquivo foi sobrescrito.[/yellow]")
         except FileNotFoundError:
-            cli.print("[red]File or FFmpeg not found. Check the input and install FFmpeg in PATH.[/red]")
+            cli.print("[red]Arquivo ou FFmpeg não encontrado. Verifique o caminho e a instalação do FFmpeg.[/red]")
         except Exception:
             # Never persist external exception messages (they can include signed URLs).
-            log.error("Operation failed. Check the connection, media availability, file permissions and FFmpeg.")
+            log.error("Não foi possível concluir. Verifique a conexão, a disponibilidade da mídia, as permissões e o FFmpeg.")
         try:
-            input("Press Enter to return to the menu...")
+            input("Pressione Enter para voltar ao menu... ")
         except EOFError:
             pass
     return wrapped

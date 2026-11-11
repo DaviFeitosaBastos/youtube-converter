@@ -23,51 +23,24 @@ def url_validate(url: str) -> bool:
         video_id(url)
         return True
     except (ValueError, RegexMatchError):
-        cli.print("[red]Enter a valid YouTube video URL.[/red]")
+        cli.print("[red]Informe um link válido de vídeo do YouTube.[/red]")
         return False
 
 
 def yes_or_not(message: str) -> bool:
-    """
-    Prompts the user for a Y/N confirmation. Returns True if 'Y', False if 'N'.
-    """
-    while True:
-        cli.print(Panel(f"[bold yellow]{message}[/bold yellow]",
-                        border_style="yellow",
-                        expand=False))
-
-        choice = Prompt.ask("\n[bold green]Choice[/bold green]",
-                            choices=["Y", "N", "y", "n"],
-                            show_choices=True).strip().upper()
-
-        if choice in ("Y", "N"):
-            if choice == "Y":
-                cli.print("[bold green]✔ Confirmed![/bold green]")
-            else:
-                cli.print("[bold red]✘ Cancelled![/bold red]")
-            sleep(0.5)
-            clear()
-            return choice == "Y"
-
-        cli.print("[bold red]✘ Invalid input! Please enter Y or N.[/bold red]")
-        sleep(0.8)
-        clear()
+    """Keep Y/N compatibility while accepting S for Portuguese users."""
+    cli.print(Panel(message, border_style="cyan", expand=False))
+    choice = Prompt.ask("[accent]Confirmar[/accent]", choices=["s", "n", "y", "S", "N", "Y"])
+    return choice.lower() in {"s", "y"}
 
 
 def get_int_input() -> int | None:
-    """
-    Reads an integer from user input. Returns None on invalid input.
-    """
     while True:
+        value = Prompt.ask("[bold cyan]Digite uma opção[/bold cyan]")
         try:
-            choice = int(Prompt.ask(f"\n[green]Choice[/green]"))
-            clear()
-            return choice
+            return int(value)
         except ValueError:
-            log.warning("Invalid input: expected a number")
-            sleep(0.5)
-            return None
-
+            cli.print("[yellow]Use o número de uma das opções acima.[/yellow]")
 
 
 def validate_path(path: str) -> bool | None:
@@ -75,7 +48,7 @@ def validate_path(path: str) -> bool | None:
     if p.is_file():
         return True
     else:
-        cli.print("[red]This path doesn't exist[/red]")
+        cli.print("[red]Esse caminho não corresponde a um arquivo.[/red]")
         sleep(0.6)
 
 def pick_file(folder: Path, extension: str) -> Path | None:
@@ -88,72 +61,49 @@ def pick_file(folder: Path, extension: str) -> Path | None:
             key=lambda p: p.name.lower(),
         ) if folder.is_dir() else []
     except OSError:
-        cli.print("[red]Cannot read this folder. Check its permissions.[/red]")
+        cli.print("[red]Não foi possível abrir a pasta. Verifique as permissões.[/red]")
         return None
 
     if not files:
-        cli.print(f"No {extension} files found in {folder}", markup=False)
+        cli.print(f"Nenhum arquivo {extension} encontrado em {folder}", markup=False)
         sleep(0.6)
         return None
 
-    cli.print(f"\n[bold]Available {extension} files:[/bold]")
+    cli.print(f"\n[bold]Arquivos {extension} disponíveis:[/bold]")
     for i, file in enumerate(files, start=1):
         cli.print(f"{i} - {file.name}", markup=False)
 
     while True:
         try:
-            choice = int(input("\nChoice: "))
+            choice = int(input("\nNúmero do arquivo: "))
             if 1 <= choice <= len(files):
                 return files[choice - 1]
-            cli.print("[red]Invalid option![/red]")
+            cli.print("[red]Escolha um dos arquivos da lista.[/red]")
             sleep(0.5)
         except ValueError:
-            log.warning(f"Invalid input: expected number")
+            cli.print("[yellow]Digite o número do arquivo.[/yellow]")
             sleep(0.5)
+
+
+def _validate_choice(choice: int, allowed: tuple[int, ...]) -> int | None:
+    if choice in allowed:
+        return choice
+    cli.print("[yellow]Essa opção não está no menu.[/yellow]")
+    input("Pressione Enter para tentar novamente... ")
+    return None
 
 
 def main_input_validated(input_choice: int) -> int | None:
-
-    if input_choice in [1, 2, 3, 0]:
-        cli.print(f"\n[green]Option selected {input_choice}")
-        sleep(1)
-        return input_choice
-
-    cli.print(f"[red]Invalid option")
-    sleep(1)
-
+    return _validate_choice(input_choice, (0, 1, 2, 3))
 
 
 def vd_input_validated(input_choice: int) -> int | None:
+    return _validate_choice(input_choice, (0, 1, 2, 3))
 
-    if input_choice in [1, 2, 3, 0]:
-        cli.print(f"\n[green]Option selected {input_choice}")
-        sleep(1)
-        return input_choice
-
-    cli.print(f"[red]Invalid option")
-    sleep(1)
 
 def track_input_validated(input_choice: int) -> int | None:
+    return _validate_choice(input_choice, (0, 1))
 
-    if input_choice in [1, 0]:
-        cli.print(f"\n[green]Option selected {input_choice}")
-        sleep(1)
-        return input_choice
-
-    cli.print(f"[red]Invalid option")
-    sleep(1)
 
 def gif_input_validated(input_choice: int) -> int | None:
-
-    if input_choice in [1, 0]:
-        cli.print(f"\n[green]Option selected {input_choice}")
-        sleep(1)
-        return input_choice
-
-    cli.print(f"[red]Invalid option")
-    sleep(1)
-
-if __name__ == "__main__":
-    yes_or_not("Wanna go back [Y/N]")
-    pass
+    return _validate_choice(input_choice, (0, 1))

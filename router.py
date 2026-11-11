@@ -1,4 +1,4 @@
-from ui.display import cli, clear, headers
+from ui.display import clear, headers, menu_options
 from ui.validation import yes_or_not, get_int_input, url_validate, vd_input_validated, track_input_validated, gif_input_validated
 from service.video_service import download_high_res, download_low_res, get_video_info
 from service.track_service import download_track_youtube
@@ -29,10 +29,11 @@ def videos_downloader_menu():
     while True:
         clear()
         headers(HEADER1)
-        cli.print("[red]1[/red] - Get higher resolution videos")
-        cli.print("[red]2[/red] - Get lower resolution videos")
-        cli.print("[red]3[/red] - Get the videos info")
-        cli.print("[red]0[/red] - [yellow]Back to main menu[/yellow]")
+        menu_options([
+            (1, "Alta qualidade", "A melhor resolução MP4 disponível, com áudio."),
+            (2, "Arquivo menor", "Vídeo com áudio na menor resolução MP4 disponível."),
+            (3, "Informações do vídeo", "Consulte título, duração, autor e descrição."),
+        ])
 
         input_choice = get_int_input()
 
@@ -41,7 +42,7 @@ def videos_downloader_menu():
 
         if input_choice == 0:
             clear()
-            if yes_or_not("Wanna go back [Y/N]: "):
+            if yes_or_not("Voltar ao menu principal?"):
                 break
             continue
 
@@ -52,7 +53,7 @@ def videos_downloader_menu():
 
         handler = sub_routes.get(choice)
         if handler:
-            url = input("\nURL: ")
+            url = input("Link do YouTube: ").strip()
             if not url_validate(url):
                 continue
             handler(url)
@@ -74,8 +75,9 @@ def tracks_downloader_menu():
     while True:
         clear()
         headers(HEADER2)
-        cli.print("[purple]1[/purple] - Get the track from [red][[/red][red]YOU[/red]TUBE[red]][/red]")
-        cli.print("[purple]0[/purple] - [yellow]Back to main menu[/yellow]")
+        menu_options([
+            (1, "Baixar áudio em MP3", "Cole o link de um vídeo para extrair a faixa de áudio."),
+        ], color="magenta")
 
         input_choice = get_int_input()
 
@@ -84,7 +86,7 @@ def tracks_downloader_menu():
 
         if input_choice == 0:
             clear()
-            if yes_or_not("Wanna go back [Y/N]: "):
+            if yes_or_not("Voltar ao menu principal?"):
                 break
             continue
 
@@ -95,7 +97,7 @@ def tracks_downloader_menu():
 
         handler = sub_routes.get(choice)
         if handler:
-            url = input("\nURL: ")
+            url = input("Link do YouTube: ").strip()
             if not url_validate(url):
                 continue
             handler(url)
@@ -108,8 +110,9 @@ def gif_converter_menu():
     while True:
         clear()
         headers(HEADER3)
-        cli.print("[cyan]1[/cyan] - Convert MP4 to GIF")
-        cli.print("[cyan]0[/cyan] - [yellow]Back to main menu[/yellow]")
+        menu_options([
+            (1, "Converter MP4 para GIF", "Escolha o arquivo, o trecho, o tamanho e a fluidez."),
+        ], color="green")
 
         input_choice = get_int_input()
 
@@ -118,7 +121,7 @@ def gif_converter_menu():
 
         if input_choice == 0:  # ← check ANTES do validador
             clear()
-            if yes_or_not("Wanna go back [Y/N]: "):
+            if yes_or_not("Voltar ao menu principal?"):
                 break
             continue
 
@@ -130,7 +133,7 @@ def gif_converter_menu():
         handler = sub_routes.get(choice)
         if handler:
             folder = get_base_dir() / "videos"
-            path_input = input("MP4 path (Enter to choose from downloads): ").strip().strip('"')
+            path_input = input("Caminho do MP4 (Enter para escolher dos downloads): ").strip().strip('"')
             path = path_input or pick_file(folder, ".mp4")
             if path:
                 handler(str(path))

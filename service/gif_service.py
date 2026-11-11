@@ -25,17 +25,17 @@ def _get_time_input(label: str) -> str:
             _time_seconds(value)
             return value
         except ValueError:
-            cli.print("[red]Invalid time. Use HH:MM:SS (example: 00:00:05).[/red]")
+            cli.print("[red]Horário inválido. Use HH:MM:SS (exemplo: 00:00:05).[/red]")
 
 
 def _get_int_with_default(label: str, default: int, maximum: int = 4096) -> int:
     while True:
-        value = input(f"{label} (default: {default}, maximum: {maximum}): ").strip()
+        value = input(f"{label} (padrão: {default}, máximo: {maximum}): ").strip()
         if not value:
             return default
         if value.isascii() and value.isdigit() and 0 < int(value) <= maximum:
             return int(value)
-        cli.print(f"Enter a number between 1 and {maximum}.")
+        cli.print(f"Digite um número entre 1 e {maximum}.")
 
 
 @media_action
@@ -45,16 +45,16 @@ def convert_mp4_to_gif(path: str) -> None:
         return
     source = Path(path).resolve()
     if source.suffix.lower() != ".mp4":
-        cli.print("[red]File must be a .mp4[/red]")
+        cli.print("[red]Escolha um arquivo .mp4.[/red]")
         return
-    start = _time_seconds(_get_time_input("Start time"))
+    start = _time_seconds(_get_time_input("Início do trecho"))
     while True:
-        end = _time_seconds(_get_time_input("End time"))
+        end = _time_seconds(_get_time_input("Fim do trecho"))
         if end > start:
             break
-        cli.print("[red]End time must be after start time.[/red]")
+        cli.print("[red]O fim do trecho deve ser posterior ao início.[/red]")
     fps = _get_int_with_default("FPS", 10, 60)
-    width = _get_int_with_default("Width (px)", 480)
+    width = _get_int_with_default("Largura (px)", 480)
     folder = output_folder("gifs")
     destination = folder / (safe_filename(source.stem) + ".gif")
     if destination.exists():
@@ -71,5 +71,5 @@ def convert_mp4_to_gif(path: str) -> None:
          .output(str(result)).overwrite_output().global_args("-nostdin")
          .run(cmd=executable, quiet=True))
         publish_file(result, destination)
-    cli.print(f"Saved to: {destination}", markup=False)
-    input("Press Enter to return to the menu...")
+    cli.print(f"Salvo em: {destination}", markup=False)
+    input("Pressione Enter para voltar ao menu... ")

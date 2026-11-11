@@ -97,6 +97,9 @@ After selecting an option, follow the prompts in the terminal.
 
 ---
 
+
+The terminal interface uses Rich panels, numbered menus, FFmpeg status and an output-directory indicator. Prompts are in Brazilian Portuguese; use menu numbers, Enter to continue and Ctrl+C to exit.
+
 ## Output Folders
 
 Output directories are created as needed in the user data directory (see below):
