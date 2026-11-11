@@ -63,11 +63,11 @@ class MediaTests(unittest.TestCase):
         self.assertTrue((self.root / 'videos').is_dir())
 
     def test_linux_user_data_path(self):
-        with patch.dict(os.environ, {'XDG_DATA_HOME': str(self.root)}, clear=True), patch.object(log_utils.sys, 'platform', 'linux'):
+        with patch.dict(os.environ, {'XDG_DATA_HOME': str(self.root)}, clear=True), patch.object(log_utils.sys, 'platform', 'linux'), patch.object(Path, 'home', side_effect=RuntimeError('No home directory')):
             self.assertEqual(log_utils.get_base_dir(), self.root / 'youtube-converter')
 
     def test_windows_user_data_path(self):
-        with patch.dict(os.environ, {'LOCALAPPDATA': str(self.root)}, clear=True), patch.object(log_utils.sys, 'platform', 'win32'):
+        with patch.dict(os.environ, {'LOCALAPPDATA': str(self.root)}, clear=True), patch.object(log_utils.sys, 'platform', 'win32'), patch.object(Path, 'home', side_effect=RuntimeError('No home directory')):
             self.assertEqual(log_utils.get_base_dir(), self.root / 'youtube-converter')
 
     def test_logs_do_not_create_files(self):
