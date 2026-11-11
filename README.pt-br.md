@@ -99,7 +99,7 @@ Após selecionar uma opção, siga as instruções no terminal.
 
 ## Pastas de Saída
 
-Todos os arquivos são salvos automaticamente na primeira execução:
+As pastas são criadas quando necessárias no diretório de dados do usuário (veja abaixo):
 
 | Pasta | Conteúdo |
 |---|---|
@@ -112,17 +112,11 @@ Todos os arquivos são salvos automaticamente na primeira execução:
 ## Gerando o Executável
 
 ```bash
-pyinstaller --onefile --paths . main.py
+python -m pip install -r requirements-build.txt
+python -m PyInstaller --onefile --paths . --name Youtube_conversor main.py
 ```
 
-> O executável será gerado na pasta `dist/`.
-> As pastas `videos/`, `audios/` e `gifs/` são criadas automaticamente na primeira execução junto ao executável.
-
-Para recompilar, limpe o build anterior primeiro:
-
-```bash
-rm -rf build/ dist/ main.spec
-```
+> O executável fica em `dist/`. O FFmpeg continua sendo um requisito externo, disponível no PATH.
 
 ---
 
@@ -131,7 +125,6 @@ rm -rf build/ dist/ main.spec
 | Pacote | Finalidade |
 |---|---|
 | `pytubefix` | Download de vídeo/áudio do YouTube |
-| `yt-dlp` | Backend alternativo de download |
 | `ffmpeg-python` | Conversão de MP4 para GIF |
 | `rich` | Estilização da interface no terminal |
 
@@ -155,3 +148,30 @@ rm -rf build/ dist/ main.spec
 ## Autor
 
 [DaviFeitosaBastos](https://github.com/DaviFeitosaBastos)
+
+## Linux e Windows, testes e privacidade
+
+Requer Python 3.11 ou superior e FFmpeg no PATH. No Windows, use
+`venv\Scripts\Activate.ps1` no PowerShell ou `venv\Scripts\activate.bat` no CMD.
+
+As mídias ficam em `~/.local/share/youtube-converter` (Linux; respeita
+`XDG_DATA_HOME`) ou `%LOCALAPPDATA%\youtube-converter` (Windows).
+Para manter a pasta de saída antiga, configure `YOUTUBE_CONVERTER_DATA_DIR`
+com o caminho absoluto do projeto. Os arquivos antigos não são movidos ou apagados.
+O conversor aceita um caminho MP4 externo ou a seleção entre os downloads.
+
+```bash
+python main.py --check
+python -m unittest discover -s tests -v
+```
+
+O CI testa Linux e Windows, Python 3.11 e 3.14. Tags `v*` geram executáveis
+separados por sistema e publicam uma release; execução manual gera artefatos.
+Não há backend web nesta versão.
+
+Leia [PRIVACY.md](PRIVACY.md) para dados usados, terceiros, retenção e exclusão.
+Não há telemetria nem logs persistentes. Isso não constitui certificação jurídica
+de conformidade com a LGPD.
+
+No Linux, o executável baixado pode precisar de `chmod +x Youtube_conversor-Linux`.
+O build usa o ambiente Ubuntu do CI; distribuições antigas podem exigir compilação local.

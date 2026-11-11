@@ -1,8 +1,7 @@
 from rich.prompt import Prompt
 from rich.panel import Panel
 from ui.display import sleep, clear, cli
-from pytubefix import YouTube
-from pytubefix.exceptions import VideoUnavailable, RegexMatchError
+from pytubefix.exceptions import RegexMatchError
 from urllib.parse import urlparse
 from pathlib import Path
 from utils.log_utils import get_logger
@@ -11,53 +10,36 @@ log = get_logger(__name__)
 
 def url_validate(url: str) -> bool:
     """
-    Validates if the given string is a valid and accessible YouTube URL.
+    Validate a YouTube video URL locally; the service checks availability.
     """
-    # 1. Check if the url has an basic url structure
-    parsed = urlparse(url)
-    if not (parsed.scheme in ("http", "https") and parsed.netloc):
-        cli.print("[red]Invalid URL format[/red]")
-        sleep(0.6)
-        clear()
-        return False
-
-    # 2. Check if it's youtube url
-    if not ("youtube.com" in parsed.netloc or "youtu.be" in parsed.netloc):
-        cli.print("[red]This is not a YouTube URL[/red]")
-        sleep(0.6)
-        clear()
-        return False
-
-    # 3. Check if the video exist or is available
     try:
-        yt = YouTube(url)
-        _ = yt.title
+        parsed = urlparse(url)
+        host = (parsed.hostname or "").lower()
+        valid_host = host in {"youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com", "youtu.be", "www.youtu.be"}
+        if parsed.scheme not in {"http", "https"} or not valid_host or parsed.username or parsed.password or parsed.port not in (None, 80, 443):
+            raise ValueError("Invalid YouTube URL")
+        # Let the downloader report availability; validation should not make duplicate requests.
+        from pytubefix.extract import video_id
+        video_id(url)
         return True
-    except VideoUnavailable:
-        log.error(f"Unvailable video: This video can not exist")
+    except (ValueError, RegexMatchError):
+        cli.print("[red]Enter a valid YouTube video URL.[/red]")
         return False
-    except RegexMatchError:
-        log.error(f"Invalid Url: expected a valid URL")
-        return False
-    except Exception as e:
-        log.error(f"Invalid Url: {e}")
-        sleep(0.6)
-        clear()
-        return False
+
 
 def yes_or_not(message: str) -> bool:
     """
     Prompts the user for a Y/N confirmation. Returns True if 'Y', False if 'N'.
     """
     while True:
-        cli.print(Panel(f"[bold yellow]{message}[/bold yellow]", 
-                        border_style="yellow", 
+        cli.print(Panel(f"[bold yellow]{message}[/bold yellow]",
+                        border_style="yellow",
                         expand=False))
-        
-        choice = Prompt.ask("\n[bold green]Choice[/bold green]", 
-                            choices=["Y", "N", "y", "n"], 
+
+        choice = Prompt.ask("\n[bold green]Choice[/bold green]",
+                            choices=["Y", "N", "y", "n"],
                             show_choices=True).strip().upper()
-        
+
         if choice in ("Y", "N"):
             if choice == "Y":
                 cli.print("[bold green]✔ Confirmed![/bold green]")
@@ -66,14 +48,14 @@ def yes_or_not(message: str) -> bool:
             sleep(0.5)
             clear()
             return choice == "Y"
-        
+
         cli.print("[bold red]✘ Invalid input! Please enter Y or N.[/bold red]")
         sleep(0.8)
         clear()
 
 
 def get_int_input() -> int | None:
-    """ 
+    """
     Reads an integer from user input. Returns None on invalid input.
     """
     while True:
@@ -81,8 +63,8 @@ def get_int_input() -> int | None:
             choice = int(Prompt.ask(f"\n[green]Choice[/green]"))
             clear()
             return choice
-        except ValueError as e:
-            log.warning(f"Invalid input: expected a number {e}")
+        except ValueError:
+            log.warning("Invalid input: expected a number")
             sleep(0.5)
             return None
 
@@ -90,7 +72,7 @@ def get_int_input() -> int | None:
 
 def validate_path(path: str) -> bool | None:
     p = Path(path)
-    if p.exists():
+    if p.is_file():
         return True
     else:
         cli.print("[red]This path doesn't exist[/red]")
@@ -100,16 +82,23 @@ def pick_file(folder: Path, extension: str) -> Path | None:
     """
     Lists files with the given extension in the folder and lets the user pick one.
     """
-    files = list(folder.glob(f"*{extension}"))
+    try:
+        files = sorted(
+            (p for p in folder.iterdir() if p.is_file() and p.suffix.lower() == extension.lower()),
+            key=lambda p: p.name.lower(),
+        ) if folder.is_dir() else []
+    except OSError:
+        cli.print("[red]Cannot read this folder. Check its permissions.[/red]")
+        return None
 
     if not files:
-        cli.print(f"[red]No {extension} files found in {folder}[/red]")
+        cli.print(f"No {extension} files found in {folder}", markup=False)
         sleep(0.6)
         return None
 
     cli.print(f"\n[bold]Available {extension} files:[/bold]")
     for i, file in enumerate(files, start=1):
-        cli.print(f"[cyan]{i} - {file.name}[/cyan]")
+        cli.print(f"{i} - {file.name}", markup=False)
 
     while True:
         try:
@@ -125,11 +114,11 @@ def pick_file(folder: Path, extension: str) -> Path | None:
 
 def main_input_validated(input_choice: int) -> int | None:
 
-    if input_choice in [1, 2, 3, 0]: 
+    if input_choice in [1, 2, 3, 0]:
         cli.print(f"\n[green]Option selected {input_choice}")
         sleep(1)
-        return input_choice 
-    
+        return input_choice
+
     cli.print(f"[red]Invalid option")
     sleep(1)
 
@@ -137,31 +126,31 @@ def main_input_validated(input_choice: int) -> int | None:
 
 def vd_input_validated(input_choice: int) -> int | None:
 
-    if input_choice in [1, 2, 3, 0]: 
+    if input_choice in [1, 2, 3, 0]:
         cli.print(f"\n[green]Option selected {input_choice}")
         sleep(1)
-        return input_choice 
-    
+        return input_choice
+
     cli.print(f"[red]Invalid option")
-    sleep(1) 
-    
+    sleep(1)
+
 def track_input_validated(input_choice: int) -> int | None:
 
-    if input_choice in [1, 0]: 
+    if input_choice in [1, 0]:
         cli.print(f"\n[green]Option selected {input_choice}")
         sleep(1)
-        return input_choice 
-    
+        return input_choice
+
     cli.print(f"[red]Invalid option")
-    sleep(1) 
+    sleep(1)
 
 def gif_input_validated(input_choice: int) -> int | None:
 
-    if input_choice in [1, 2, 3, 0]: 
+    if input_choice in [1, 0]:
         cli.print(f"\n[green]Option selected {input_choice}")
         sleep(1)
-        return input_choice 
-    
+        return input_choice
+
     cli.print(f"[red]Invalid option")
     sleep(1)
 

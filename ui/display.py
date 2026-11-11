@@ -1,9 +1,6 @@
 from rich.console import Console
 from rich.panel import Panel
-from rich.align import Align
-import time 
-from random import choice, uniform 
-from rich.progress import track, SpinnerColumn, BarColumn, TextColumn, Progress
+import time
 
 cli = Console()
 
@@ -26,40 +23,10 @@ def show_splash():
 
 
 def loading():
-    show_splash()
-    cli.print(r'''[cyan]
- /$$     /$$ /$$$$$$$$        /$$$$$$                                                                                 
-|  $$   /$$/|__  $$__/       /$$__  $$                                                                                
- \  $$ /$$/    | $$         | $$  \__/  /$$$$$$  /$$$$$$$  /$$    /$$ /$$$$$$   /$$$$$$   /$$$$$$$  /$$$$$$   /$$$$$$ 
-  \  $$$$/     | $$         | $$       /$$__  $$| $$__  $$|  $$  /$$//$$__  $$ /$$__  $$ /$$_____/ /$$__  $$ /$$__  $$
-   \  $$/      | $$         | $$      | $$  \ $$| $$  \ $$ \  $$/$$/| $$$$$$$$| $$  \__/|  $$$$$$ | $$  \ $$| $$  \__/
-    | $$       | $$         | $$    $$| $$  | $$| $$  | $$  \  $$$/ | $$_____/| $$       \____  $$| $$  | $$| $$      
-    | $$       | $$         |  $$$$$$/|  $$$$$$/| $$  | $$   \  $/  |  $$$$$$$| $$       /$$$$$$$/|  $$$$$$/| $$      
-    |__/       |__/          \______/  \______/ |__/  |__/    \_/    \_______/|__/      |_______/  \______/ |__/                
-''')
-    with Progress(
-        SpinnerColumn(),
-        BarColumn(),
-        TextColumn("[bold blue]{task.description}"),
-        transient=True
-    ) as progress:
-        
-        task = progress.add_task("[green]Loading system...", total=30)
-        
-        msgs = ["📚 Loading librarys...", "🔎 Validating codecs...", "🔃 Preparing caches...", "🏁 Almost there...", "⚡ Optimizing the terminal...", "🌐 Loading WEB...", 
-        "▶️  Loading Youtube", "🧹 Cleaning the buffer..."]
-
-        last_msg = ""
-        
-        for i in range(31):
-            if i % 8 == 0: # Troca a mensagem a cada 8 passos
-                new_msg = choice([m for m in msgs if m != last_msg])
-                progress.update(task, description=f"[green]{new_msg}")
-                last_msg = new_msg
-            
-            progress.advance(task)
-            sleep(uniform(0.03, 0.4))
-    sleep(0.5)
+    cli.print("[bold cyan]YouTube Converter[/bold cyan]")
+    cli.print("Privacy: media stays on this computer. YouTube downloads use the network.")
+    cli.print("No telemetry or persistent logs. See PRIVACY.md for details.")
+    input("Press Enter to open the menu...")
 
 
 def print_exit():
@@ -87,12 +54,12 @@ def headers(header: str) -> None:
         cli.print("[cyan]=[/cyan]" * 32)
         cli.print(f"[cyan]{header.center(32)}[/cyan]")
         cli.print("[cyan]=[/cyan]" * 32)
-            
+
     elif header == "Main menu":
         cli.print("[green]=[/green]" * 32)
         cli.print(f"[green]{header.center(32)}[/green]" )
         cli.print("[green]=[/green]" * 32)
-    else: 
+    else:
         return None
 
 def main_menu():
@@ -105,6 +72,3 @@ def main_menu():
 
 if __name__ == "__main__":
     main_menu()
-    
-    
-        

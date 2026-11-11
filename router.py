@@ -1,4 +1,4 @@
-from ui.display import cli, clear, sleep, headers
+from ui.display import cli, clear, headers
 from ui.validation import yes_or_not, get_int_input, url_validate, vd_input_validated, track_input_validated, gif_input_validated
 from service.video_service import download_high_res, download_low_res, get_video_info
 from service.track_service import download_track_youtube
@@ -88,7 +88,7 @@ def tracks_downloader_menu():
                 break
             continue
 
-        choice = vd_input_validated(input_choice)
+        choice = track_input_validated(input_choice)
 
         if not isinstance(choice, int):
             continue
@@ -130,7 +130,8 @@ def gif_converter_menu():
         handler = sub_routes.get(choice)
         if handler:
             folder = get_base_dir() / "videos"
-            path = pick_file(folder, ".mp4")
+            path_input = input("MP4 path (Enter to choose from downloads): ").strip().strip('"')
+            path = path_input or pick_file(folder, ".mp4")
             if path:
                 handler(str(path))
 

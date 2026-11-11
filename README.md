@@ -99,7 +99,7 @@ After selecting an option, follow the prompts in the terminal.
 
 ## Output Folders
 
-All files are saved automatically on first run:
+Output directories are created as needed in the user data directory (see below):
 
 | Folder | Content |
 |---|---|
@@ -112,17 +112,11 @@ All files are saved automatically on first run:
 ## Building the Executable
 
 ```bash
-pyinstaller --onefile --paths . main.py
+python -m pip install -r requirements-build.txt
+python -m PyInstaller --onefile --paths . --name Youtube_conversor main.py
 ```
 
-> The executable will be generated in the `dist/` folder.
-> The `videos/`, `audios/`, and `gifs/` folders are created automatically on first run alongside the executable.
-
-To rebuild, clean the previous build first:
-
-```bash
-rm -rf build/ dist/ main.spec
-```
+> The executable is generated in `dist/`. FFmpeg remains an external requirement and must be available in PATH.
 
 ---
 
@@ -131,7 +125,6 @@ rm -rf build/ dist/ main.spec
 | Package | Purpose |
 |---|---|
 | `pytubefix` | YouTube video/audio downloading |
-| `yt-dlp` | Alternative download backend |
 | `ffmpeg-python` | MP4 to GIF conversion |
 | `rich` | Terminal UI styling |
 
@@ -154,3 +147,29 @@ rm -rf build/ dist/ main.spec
 
 [DaviFeitosaBastos](https://github.com/DaviFeitosaBastos)
 
+
+## Linux and Windows, tests and privacy
+
+Requires Python 3.11+ and FFmpeg in PATH. In Windows PowerShell activate with
+`venv\Scripts\Activate.ps1`; in CMD use `venv\Scripts\activate.bat`.
+
+Media is stored in `~/.local/share/youtube-converter` (Linux, respecting
+`XDG_DATA_HOME`) or `%LOCALAPPDATA%\youtube-converter` (Windows).
+Set `YOUTUBE_CONVERTER_DATA_DIR` to the absolute project path to keep the old
+output location. Existing files are never moved or deleted automatically.
+The GIF menu accepts an external MP4 path or selection from downloaded videos.
+
+```bash
+python main.py --check
+python -m unittest discover -s tests -v
+```
+
+CI tests Linux and Windows on Python 3.11 and 3.14. Tags `v*` build separate
+executables and publish a release; manual runs produce build artifacts.
+The web directory is a prototype without a backend.
+
+See [PRIVACY.md](PRIVACY.md) for data use, third parties, retention and deletion.
+No telemetry or persistent logs. These measures do not certify legal compliance.
+
+On Linux, downloaded release binaries may need `chmod +x Youtube_conversor-Linux`.
+Linux builds target the Ubuntu runner environment; older distributions may require a local source build.

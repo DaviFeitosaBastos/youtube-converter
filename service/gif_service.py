@@ -1,117 +1,75 @@
-from ui.display import clear, cli, sleep
-from ui.validation import yes_or_not, validate_path
 from pathlib import Path
+from tempfile import TemporaryDirectory
+
 import ffmpeg
-from utils.log_utils import get_base_dir, get_logger
+
+from ui.display import cli
+from ui.validation import validate_path
+from utils.media import media_action, output_folder, publish_file, require_ffmpeg, safe_filename
 
 
-log = get_logger(__name__)
-
-
-FOLDER = get_base_dir() / "gifs"
-FOLDER.mkdir(exist_ok=True)
+def _time_seconds(value: str) -> int:
+    parts = value.split(":")
+    if len(parts) != 3 or any(not p.isascii() or not p.isdigit() for p in parts):
+        raise ValueError("Use HH:MM:SS")
+    hours, minutes, seconds = map(int, parts)
+    if minutes > 59 or seconds > 59:
+        raise ValueError("Minutes and seconds must be between 00 and 59")
+    return hours * 3600 + minutes * 60 + seconds
 
 
 def _get_time_input(label: str) -> str:
-    """
-    Prompts the user for a time input in HH:MM:SS format.
-    """
     while True:
-        value = input(f"\n{label} (HH:MM:SS): ").strip()
-        parts = value.split(":")
-        if len(parts) == 3 and all(p.isdigit() for p in parts):
+        value = input(f"{label} (HH:MM:SS): ").strip()
+        try:
+            _time_seconds(value)
             return value
-        cli.print("[red]Invalid format. Use HH:MM:SS (ex: 00:00:05)[/red]")
-        sleep(0.5)
+        except ValueError:
+            cli.print("[red]Invalid time. Use HH:MM:SS (example: 00:00:05).[/red]")
 
 
-def _get_int_with_default(label: str, default: int) -> int:
-    """
-    Prompts the user for an integer input with a default fallback.
-    """
+def _get_int_with_default(label: str, default: int, maximum: int = 4096) -> int:
     while True:
-        value = input(f"\n{label} (default: {default}): ").strip()
-        if value == "":
+        value = input(f"{label} (default: {default}, maximum: {maximum}): ").strip()
+        if not value:
             return default
-        if value.isdigit() and int(value) > 0:
+        if value.isascii() and value.isdigit() and 0 < int(value) <= maximum:
             return int(value)
-        cli.print("[red]Invalid value. Enter a positive number.[/red]")
-        sleep(0.5)
+        cli.print(f"Enter a number between 1 and {maximum}.")
 
 
+@media_action
 def convert_mp4_to_gif(path: str) -> None:
-    """
-    Converts a MP4 file to GIF with user-defined settings.
-    """
-    clear()
-
+    executable = require_ffmpeg()
     if not validate_path(path):
         return
-
-    mp4_path = Path(path)
-
-    if mp4_path.suffix.lower() != ".mp4":
+    source = Path(path).resolve()
+    if source.suffix.lower() != ".mp4":
         cli.print("[red]File must be a .mp4[/red]")
-        sleep(0.6)
         return
-
-    start_time = _get_time_input("Start time")
-    end_time = _get_time_input("End time")
-    fps = _get_int_with_default("FPS", 10)
+    start = _time_seconds(_get_time_input("Start time"))
+    while True:
+        end = _time_seconds(_get_time_input("End time"))
+        if end > start:
+            break
+        cli.print("[red]End time must be after start time.[/red]")
+    fps = _get_int_with_default("FPS", 10, 60)
     width = _get_int_with_default("Width (px)", 480)
-
-    gif_name = mp4_path.stem + ".gif"
-    gif_path = FOLDER / gif_name
-
-    if gif_path.exists():
-        clear()
-        cli.print(f"[yellow]GIF already exists: {gif_path.name}[/yellow]")
-        if not yes_or_not("\nType Y to return or N to quit "):
-            exit()
-        return
-
-    clear()
-    cli.print(f"[green]Converting: {mp4_path.name}[/green]")
-
-    log.info("Starting conversion....") # Log system
-    try:
-        palette_path = get_base_dir() / "palette.png"
-
-        # Step 1: generate palette for better GIF quality
-        (
-            ffmpeg
-            .input(str(mp4_path), ss=start_time, to=end_time)
-            .filter("fps", fps)
-            .filter("scale", width, -1, flags="lanczos")
-            .filter("palettegen")
-            .output(str(palette_path))
-            .overwrite_output()
-            .run(quiet=True)
-        )
-
-        # Step 2: convert using the palette
-        video_stream = ffmpeg.input(str(mp4_path), ss=start_time, to=end_time)
-        palette_stream = ffmpeg.input(str(palette_path))
-
-        (
-            ffmpeg
-            .filter(
-                [
-                    video_stream.filter("fps", fps).filter("scale", width, -1, flags="lanczos"),
-                    palette_stream
-                ],
-                "paletteuse"
-            )
-            .output(str(gif_path))
-            .overwrite_output()
-            .run(quiet=True)
-        )
-
-        palette_path.unlink(missing_ok=True)
-
-        cli.print(f"\n[green]Saved to: {gif_path}[/green]")
-
-    except ffmpeg.Error as e:
-        log.error(f"Conversion error: {e}")
-
-    sleep(0.7)
+    folder = output_folder("gifs")
+    destination = folder / (safe_filename(source.stem) + ".gif")
+    if destination.exists():
+        raise FileExistsError()
+    with TemporaryDirectory(prefix=".convert-", dir=folder) as temporary:
+        palette = Path(temporary) / "palette.png"
+        result = Path(temporary) / "result.gif"
+        def video():
+            return (ffmpeg.input(str(source), ss=start, t=end - start)
+                    .filter("fps", fps).filter("scale", width, -1, flags="lanczos"))
+        (video().filter("palettegen").output(str(palette)).overwrite_output()
+         .global_args("-nostdin").run(cmd=executable, quiet=True))
+        (ffmpeg.filter([video(), ffmpeg.input(str(palette))], "paletteuse")
+         .output(str(result)).overwrite_output().global_args("-nostdin")
+         .run(cmd=executable, quiet=True))
+        publish_file(result, destination)
+    cli.print(f"Saved to: {destination}", markup=False)
+    input("Press Enter to return to the menu...")

@@ -1,5 +1,5 @@
 # Display imports
-from ui.display import cli, clear, sleep, headers,main_menu,loading, print_exit
+from ui.display import cli, clear, headers, main_menu, loading, print_exit
 # Validation imports
 from ui.validation import get_int_input, main_input_validated
 # ROUTER import
@@ -9,25 +9,24 @@ import sys
 
 
 def main():
-    """ 
-    Main application loop. Handles navigation between menus. 
+    """
+    Main application loop. Handles navigation between menus.
     """
     HEADER = "Main menu"
 
-    # Loading desativado para testes
     loading()
 
     # Run the program loop
-    while True:      
+    while True:
         clear()
         headers(HEADER)
-        main_menu()  
+        main_menu()
 
         input_choice = get_int_input()
 
-        if input_choice == None:
+        if input_choice is None:
             continue
-        
+
         choice = main_input_validated(input_choice)
 
         if not isinstance(choice, int):
@@ -41,8 +40,24 @@ def main():
         handler = routes.get(choice)
         if handler:
             handler()
-        
-    
+
+
+def run():
+    if "--check" in sys.argv:
+        from utils.media import require_ffmpeg
+        try:
+            require_ffmpeg()
+        except FileNotFoundError:
+            cli.print("FFmpeg is missing from PATH.")
+            return 1
+        cli.print("Runtime OK: Python dependencies and FFmpeg available.")
+        return 0
+    try:
+        main()
+    except (KeyboardInterrupt, EOFError):
+        cli.print("\nExiting.")
+    return 0
+
+
 if __name__ == "__main__":
-    main()
-    
+    sys.exit(run())
